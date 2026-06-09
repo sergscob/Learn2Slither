@@ -46,13 +46,14 @@ while running:
         )
 
     # snake
-    for i, p in enumerate(game.snake):
-        color = (0, 0, 255) if i == 0 else (0, 200, 0)
+    head = True
+    for p in game.snake:
         pygame.draw.rect(
             screen,
-            color,
+            (0, 0, 250) if head else (0, 0, 150),
             (p["x"] * CELL+1, p["y"] * CELL+1, CELL-2, CELL-2)
         )
+        head = False
 
     pygame.display.flip()
 
