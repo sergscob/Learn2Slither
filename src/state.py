@@ -4,10 +4,16 @@ import random
 class MapState:
     def __init__(self, size):
         self.size = size
+        self.reset()
+
+
+    def reset(self):
         self.snake = []
         self.apples = []
         self.initSnake()
         self.initApples()
+        return self.get_state()
+
 
     def createApple(self, appleType):
         occupied = set()
@@ -105,3 +111,67 @@ class MapState:
         return True
 
 
+    def normParam(self, x):
+        return (self.size - x) / self.size
+
+
+    def get_state(self):
+        head_x = self.snake[0]["x"]
+        head_y = self.snake[0]["y"]
+
+        directions = {
+            "UP": (0, -1),
+            "DOWN": (0, 1),
+            "LEFT": (-1, 0),
+            "RIGHT": (1, 0)
+        }
+
+        state = []
+        
+        for dx, dy in directions.values():
+
+            wall_dist = 0
+            body_dist = 0
+            green_dist = 0
+            red_dist = 0
+
+            distance = 1
+
+            x = head_x + dx
+            y = head_y + dy
+
+            while (0 <= x < self.size and 0 <= y < self.size):
+
+                if body_dist == 0 and {"x": x, "y": y} in self.snake[1:]:
+                    body_dist = self.normParam(distance)
+
+                if green_dist == 0 and {"x": x, "y": y, "type":"green"} in self.apples:
+                    green_dist = self.normParam(distance)
+
+                if red_dist == 0 and {"x": x, "y": y, "type":"red"} in self.apples:
+                    red_dist = self.normParam(distance)
+
+                x += dx
+                y += dy
+                distance += 1
+
+            wall_dist = self.normParam(distance)
+
+            state.extend([
+                wall_dist,
+                body_dist,
+                green_dist,
+                red_dist
+            ])
+
+        # direction (one-hot)
+        state.extend([
+            1 if self.direction == (0, -1) else 0,
+            1 if self.direction == (0, 1) else 0,
+            1 if self.direction == (-1, 0) else 0,
+            1 if self.direction == (1, 0) else 0
+        ])
+
+        print (repr(state))
+
+        return tuple(state)

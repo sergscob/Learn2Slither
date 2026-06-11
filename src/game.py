@@ -29,6 +29,7 @@ while running:
                 game.changeDirection(0, 1)
 
     alive = game.move()
+    game.get_state()
     if not alive:
         print("GAME OVER")
         running = False
