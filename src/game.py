@@ -10,13 +10,14 @@ clock = pygame.time.Clock()
 
 game = MapState(GRID)
 
-running = True
-while running:
+userBreak = False
+while not userBreak:
     clock.tick(1)  # speed
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
-            running = False
+            userBreak = True
+            break
 
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_LEFT:
@@ -28,11 +29,11 @@ while running:
             if event.key == pygame.K_DOWN:
                 game.changeDirection(0, 1)
 
-    alive = game.move()
+    _, _, done = game.move()
     game.get_state()
-    if not alive:
+    if done:
         print("GAME OVER")
-        running = False
+        break
 
     screen.fill((0, 0, 0))
 

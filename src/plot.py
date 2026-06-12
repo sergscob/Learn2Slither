@@ -13,11 +13,15 @@ class GamePlot:
 
     def tick(self, state): 
    
-        self.clock.tick(1)  # speed
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                return True    
+            
+        self.clock.tick(10)  # speed
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                return False
+                return True
         
         self.screen.fill((0, 0, 0))
 
@@ -41,6 +45,7 @@ class GamePlot:
             head = False
 
         pygame.display.flip()
+        return False
 
     def end(self):
         pygame.quit()

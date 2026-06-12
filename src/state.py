@@ -12,6 +12,7 @@ class MapState:
         self.apples = []
         self.initSnake()
         self.initApples()
+        self.steps_without_food = 0
         return self.get_state()
 
 
@@ -70,6 +71,8 @@ class MapState:
             self.direction = (dx, dy)
 
     def move(self):
+        reward = -0.01
+        self.steps_without_food += 1
         dx, dy = self.direction
         head = self.snake[0]
 
@@ -80,12 +83,12 @@ class MapState:
 
         # WALL
         if (new_head["x"] < 0 or new_head["x"] >= self.size or new_head["y"] < 0 or new_head["y"] >= self.size):
-            return False
+            return self.get_state(), -50, True
 
         # SELF-COLLISION
         for part in self.snake:
             if part["x"] == new_head["x"] and part["y"] == new_head["y"]:
-                return False
+                return self.get_state(), -50, True
 
         self.snake.insert(0, new_head)
 
@@ -95,8 +98,10 @@ class MapState:
             if apple["x"] == new_head["x"] and apple["y"] == new_head["y"] :
                 if apple["type"] == "green": 
                     eaten = apple
+                    reward += 5
+                    self.steps_without_food = 0
                 if apple["type"] == "red": 
-                    self.snake.pop()
+                    reward -= 5
 
                 self.apples.remove(apple)
                 self.apples.append(self.createApple(apple["type"]))
@@ -106,65 +111,133 @@ class MapState:
             self.snake.pop()
 
         if len(self.snake) < 1:
-            return False
+            return self.get_state(), -50, True
+        
+        if self.steps_without_food > 100:
+            return self.get_state(), -50, True        
 
-        return True
+        return self.get_state(), reward, False
 
 
-    def normParam(self, x):
-        return (self.size - x) / self.size
+    def normParam(self, distance):
+        # return round((self.size - distance) / self.size, 1)
+        if distance <= 2: val = 3
+        elif distance <= 4: val = 2
+        elif distance <= 6: val = 1
+        else: val = 0
+        return val
 
+    # def get_state(self):
+    #     head_x = self.snake[0]["x"]
+    #     head_y = self.snake[0]["y"]
+
+    #     directions = {
+    #         "UP": (0, -1),
+    #         "DOWN": (0, 1),
+    #         "LEFT": (-1, 0),
+    #         "RIGHT": (1, 0)
+    #     }
+
+    #     state = []
+        
+    #     for dx, dy in directions.values():
+
+    #         wall_dist = 0
+    #         body_dist = 0
+    #         green_dist = 0
+    #         red_dist = 0
+
+    #         distance = 1
+
+    #         x = head_x + dx
+    #         y = head_y + dy
+
+    #         while (0 <= x < self.size and 0 <= y < self.size):
+
+    #             if body_dist == 0 and {"x": x, "y": y} in self.snake[1:]:
+    #                 body_dist = self.normParam(distance)
+
+    #             if green_dist == 0 and {"x": x, "y": y, "type":"green"} in self.apples:
+    #                 green_dist = self.normParam(distance)
+
+    #             if red_dist == 0 and {"x": x, "y": y, "type":"red"} in self.apples:
+    #                 red_dist = self.normParam(distance)
+
+    #             x += dx
+    #             y += dy
+    #             distance += 1
+
+    #         wall_dist = self.normParam(distance)
+
+    #         state.extend([
+    #             wall_dist,
+    #             body_dist,
+    #             green_dist,
+    #             red_dist
+    #         ])
+
+    #     # direction (one-hot)
+    #     # state.extend([
+    #     #     1 if self.direction == (0, -1) else 0,
+    #     #     1 if self.direction == (0, 1) else 0,
+    #     #     1 if self.direction == (-1, 0) else 0,
+    #     #     1 if self.direction == (1, 0) else 0
+    #     # ])
+
+    #     # print (repr(state))
+
+    #     return tuple(state)
 
     def get_state(self):
+
         head_x = self.snake[0]["x"]
         head_y = self.snake[0]["y"]
 
-        directions = {
-            "UP": (0, -1),
-            "DOWN": (0, 1),
-            "LEFT": (-1, 0),
-            "RIGHT": (1, 0)
-        }
+        directions = [
+            (0, -1),  # UP
+            (0, 1),   # DOWN
+            (-1, 0),  # LEFT
+            (1, 0)    # RIGHT
+        ]
 
         state = []
-        
-        for dx, dy in directions.values():
 
-            wall_dist = 0
-            body_dist = 0
-            green_dist = 0
-            red_dist = 0
-
-            distance = 1
+        for dx, dy in directions:
 
             x = head_x + dx
             y = head_y + dy
 
-            while (0 <= x < self.size and 0 <= y < self.size):
+            danger = 0
+            food = 0
 
-                if body_dist == 0 and {"x": x, "y": y} in self.snake[1:]:
-                    body_dist = self.normParam(distance)
+            # смотрим вдоль луча
+            while 0 <= x < self.size and 0 <= y < self.size:
 
-                if green_dist == 0 and {"x": x, "y": y, "type":"green"} in self.apples:
-                    green_dist = self.normParam(distance)
+                # тело = опасность
+                if {"x": x, "y": y} in self.snake[1:]:
+                    danger = 1
 
-                if red_dist == 0 and {"x": x, "y": y, "type":"red"} in self.apples:
-                    red_dist = self.normParam(distance)
+                # стена = опасность (если сразу или позже)
+                # если мы вообще вышли — значит уже опасно
+                # (обрабатывается через границу)
+
+                # зелёное яблоко
+                if {"x": x, "y": y, "type": "green"} in self.apples:
+                    food = 1
 
                 x += dx
                 y += dy
-                distance += 1
 
-            wall_dist = self.normParam(distance)
+            # если следующий шаг сразу в стену → danger
+            nx = head_x + dx
+            ny = head_y + dy
 
-            state.extend([
-                wall_dist,
-                body_dist,
-                green_dist,
-                red_dist
-            ])
+            if not (0 <= nx < self.size and 0 <= ny < self.size):
+                danger = 1
 
-        # direction (one-hot)
+            state.extend([danger, food])
+
+        # текущее направление (важно для избегания разворота)
         state.extend([
             1 if self.direction == (0, -1) else 0,
             1 if self.direction == (0, 1) else 0,
@@ -172,6 +245,4 @@ class MapState:
             1 if self.direction == (1, 0) else 0
         ])
 
-        print (repr(state))
-
-        return tuple(state)
+        return tuple(state)    
