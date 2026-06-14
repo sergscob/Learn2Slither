@@ -1,5 +1,9 @@
 from collections import defaultdict
+import ast
 import random
+import json
+import os
+from datetime import datetime
 
 
 class QAgent:
@@ -19,11 +23,9 @@ class QAgent:
             lambda: [0.0, 0.0, 0.0, 0.0]
         )
 
-
-
     def encode_state(self, state):
         return tuple(state)
-    
+
     def choose_action(self, state):
         # нормализуем state (ВАЖНО для Q-table ключа)
         state = self.encode_state(state)
@@ -69,16 +71,14 @@ class QAgent:
 
         self.current_direction = best_action
         return best_action
-    
 
     def learn(self, state, action, reward, next_state, done):
 
         if state in self.last_states[-10:]:
-            reward -= self.loop_penalty        
+            reward -= self.loop_penalty
 
-        state =  state = self.encode_state(state)
+        state = state = self.encode_state(state)
         next_state = self.encode_state(next_state)
-
 
         old_q = self.q_table[state][action]
 
@@ -87,13 +87,41 @@ class QAgent:
         else:
             target = reward + self.gamma * max(self.q_table[next_state])
 
-        self.q_table[state][action] = (old_q + self.lr * (target - old_q))    
+        self.q_table[state][action] = (old_q + self.lr * (target - old_q))
         self.last_states.append(state)
         if len(self.last_states) > 50:
             self.last_states.pop(0)
 
-
     def end_episode(self):
-        self.epsilon = max(self.epsilon_min, self.epsilon * self.epsilon_decay)        
+        self.epsilon = max(self.epsilon_min, self.epsilon * self.epsilon_decay)
 
+    def save_model(self):
+        fname = "model/" + datetime.now().strftime("model_%Y%m%d_%H%M%S.json")
+        data = {
+            "q_table": {str(k): v for k, v in self.q_table.items()},
+            "epsilon": self.epsilon,
+            "current_direction": self.current_direction,
+        }
+        with open(fname, "w") as f:
+            json.dump(data, f)
 
+        print(f"Model saved to {fname}")
+
+    def load_model(self, filename="qtable.pkl"):
+        if not os.path.exists(filename):
+            print("No saved model found")
+            return
+
+        with open(filename, "r") as f:
+            data = json.load(f)
+
+        self.q_table = defaultdict(
+            lambda: [0.0, 0.0, 0.0, 0.0]
+        )
+
+        for k, v in data["q_table"].items():
+            self.q_table[ast.literal_eval(k)] = v
+
+        self.epsilon = data["epsilon"]
+        self.current_direction = data["current_direction"]
+        print(f"Model loaded from {filename}")
