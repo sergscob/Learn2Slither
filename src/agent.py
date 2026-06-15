@@ -8,10 +8,10 @@ from datetime import datetime
 
 class QAgent:
     def __init__(self):
-        self.lr = 0.1         
+        self.lr = 0.1
         self.gamma = 0.9
         self.epsilon = 1.0
-        self.epsilon_decay = 0.9995 
+        self.epsilon_decay = 0.9995
         self.epsilon_min = 0.01
 
         # 3 actions: 0=forward, 1=left, 2=right
@@ -49,13 +49,12 @@ class QAgent:
         self.epsilon = data["epsilon"]
         print(f"Model loaded from {filename}")
 
-
     def encode_state(self, state):
         return tuple(state)
 
     def choose_action(self, state):
         state = self.encode_state(state)
-        
+
         # 1. Exploration
         if random.random() < self.epsilon:
             return random.randint(0, 2)
@@ -64,7 +63,7 @@ class QAgent:
         q_values = self.q_table[state]
         best_value = max(q_values)
         best_actions = [a for a in range(3) if q_values[a] == best_value]
-        
+
         return random.choice(best_actions)
 
     def learn(self, state, action, reward, next_state, done):

@@ -6,6 +6,7 @@ from agent import QAgent
 
 SIZE = 10
 
+
 def train(episode_count, show_shaque):
     agent = QAgent()
     env = MapState(SIZE)
@@ -13,15 +14,15 @@ def train(episode_count, show_shaque):
     userBreak = False
 
     for episode in range(episode_count):
-        if userBreak:  
+        if userBreak:
             break
 
         state = env.reset()
         done = False
+        episode_reward = 0
         show = True if episode % show_shaque == 0 else False
         if show:
             print(f"Show episode {episode}")
-        episode_reward = 0
 
         while not done:
             action = agent.choose_action(state)
@@ -35,9 +36,12 @@ def train(episode_count, show_shaque):
             env.changeDirection(dx, dy)
             next_state, reward, done = env.move()
             episode_reward += reward
-            
-            userBreak = plot.tick(env, state) if show else plot.checkPressButtons(env)
-            if userBreak:  
+
+            if show:
+                userBreak = plot.tick(env, state)
+            else:
+                userBreak = plot.checkPressButtons(env)
+            if userBreak:
                 break
             if plot.paused:
                 userBreak = plot.wait_until_close(False)
@@ -62,8 +66,8 @@ def train(episode_count, show_shaque):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("-c", "--count", default="100000", help="episodes count")
-    parser.add_argument("-s", "--show", default="10000", help="episodes count")
+    parser.add_argument("-c", "--count", default="100000", help="episodes cnt")
+    parser.add_argument("-s", "--show", default="10000", help="show game")
     args = parser.parse_args()
     episode_count = int(args.count) if args.count.isdigit() else 0
     show_shaque = int(args.show) if args.show.isdigit() else 0

@@ -10,6 +10,7 @@ YELLOW = "\033[33m"
 BLUE = "\033[34m"
 RESET = "\033[0m"
 
+
 def print_snake_vision(state, current_direction_vector):
     danger_f, danger_l, danger_r, apple_f, apple_b, apple_l, apple_r = state
 
@@ -21,8 +22,10 @@ def print_snake_vision(state, current_direction_vector):
     }
     arrow = dir_arrows.get(current_direction_vector, "??")
 
-    print(f"Dir: {arrow} {RED}Danger: forward={danger_f}, left={danger_l}, right={danger_r}{RESET} "
-          f"{GREEN}Apple: forward={apple_f}, back={apple_b}, left={apple_l}, right={apple_r}{RESET}")
+    print(f"Dir: {arrow} {RED}Danger: forward={danger_f},"
+          f" left={danger_l}, right={danger_r}{RESET} "
+          f"{GREEN}Apple: forward={apple_f}, back={apple_b}, "
+          f" left={apple_l}, right={apple_r}{RESET}")
     print(f"State {state}")
 
 
@@ -62,7 +65,7 @@ class GamePlot:
     def tick(self, env, state):
         while True:
             if self.checkPressButtons(env):
-                    return True
+                return True
 
             self.screen.fill((0, 0, 0))
 
@@ -71,7 +74,7 @@ class GamePlot:
                 pygame.draw.circle(
                     self.screen,
                     color,
-                    (int(a["x"] * CELL + CELL / 2), int(a["y"] * CELL + CELL / 2)),
+                    (int(a["x"] * CELL + CELL/2), int(a["y"] * CELL + CELL/2)),
                     int(CELL / 2)
                 )
 
@@ -99,30 +102,19 @@ class GamePlot:
 
             pygame.display.flip()
 
-            # Если пауза включена — удерживаем этот цикл здесь и не возвращаем управление в train.py
             if self.paused:
-                self.clock.tick(30)  # На паузе крутимся побыстрее для плавной анимации кнопки
+                self.clock.tick(30)
             else:
-                # Если паузы нет — ограничиваем скорость игры (10 FPS) и выходим в train.py делать ход
                 self.clock.tick(10)
-                break 
+                break
 
         return False
 
-    def end(self):
-        pass
-
     def wait_until_close(self, isFinished):
-        # self.screen.fill((0, 0, 0))
         if isFinished:
             text = self.font.render("Training finished", True, (255, 255, 255))
             self.screen.blit(text, (20, 20))
-        
-        # pygame.draw.rect(self.screen, BTN_COLOR, self.save_btn)
-        # self.screen.blit(
-        #     self.font.render("Save", True, (255, 255, 255)),
-        #     (self.save_btn.x + 35, self.save_btn.y + 10)
-        # )
+
         pygame.display.flip()
 
         while True:
@@ -135,7 +127,6 @@ class GamePlot:
                         self.agent.save_model()
                     if self.pause_btn.collidepoint(event.pos):
                         self.paused = not self.paused
-                        if not isFinished: 
+                        if not isFinished:
                             return False
             self.clock.tick(30)
-
