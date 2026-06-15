@@ -12,7 +12,7 @@ game = MapState(GRID)
 
 userBreak = False
 while not userBreak:
-    clock.tick(1)  # speed
+    clock.tick(2)  # speed
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:

@@ -1,6 +1,5 @@
 import random
 
-
 class MapState:
     def __init__(self, size):
         self.size = size
@@ -32,6 +31,7 @@ class MapState:
             return None
 
         x, y = random.choice(free_cells)
+
         return {
             "x": x,
             "y": y,
@@ -40,10 +40,20 @@ class MapState:
 
     def initApples(self, cGreen=2, cRed=1):
         for i in range(cGreen):
-            self.apples.append(self.createApple("green"))
+            apple = self.createApple("green")
+            if apple is not None:
+                self.apples.append(apple)
 
         for i in range(cRed):
-            self.apples.append(self.createApple("red"))
+            apple = self.createApple("red")
+            if apple is not None:
+                self.apples.append(apple)
+        self.updateApplesCoords()
+
+    def updateApplesCoords(self) :
+        self.green_coords = {(a["x"], a["y"]) for a in self.apples if a["type"] == "green"}
+        self.red_coords = {(a["x"], a["y"]) for a in self.apples if a["type"] == "red"}
+
 
     def initSnake(self, startLen=3):
         while True:
@@ -70,7 +80,7 @@ class MapState:
         self.direction = (dx, dy)
 
     def move(self):
-        reward = -0.01
+        reward = -0.1 
         self.steps_without_food += 1
         dx, dy = self.direction
         head = self.snake[0]
@@ -80,31 +90,36 @@ class MapState:
             "y": head["y"] + dy
         }
 
-        # WALL
+        if self.steps_without_food > 200:
+            return self.get_state(), -50, True
+
+        # WALLS
         if (new_head["x"] < 0 or new_head["x"] >= self.size
                 or new_head["y"] < 0 or new_head["y"] >= self.size):
             return self.get_state(), -50, True
 
-        # SELF-COLLISION
-        for part in self.snake:
-            if part["x"] == new_head["x"] and part["y"] == new_head["y"]:
-                return self.get_state(), -50, True
+        # SELF-EAT
+        if any(part["x"] == new_head["x"] and part["y"] == new_head["y"] for part in self.snake):
+            return self.get_state(), -50, True
 
+        # ok, go
         self.snake.insert(0, new_head)
 
-        # APPLE
         eaten = None
         for apple in self.apples:
             if apple["x"] == new_head["x"] and apple["y"] == new_head["y"]:
                 if apple["type"] == "green":
                     eaten = apple
-                    reward += 5
+                    reward += 10.0  
                     self.steps_without_food = 0
-                if apple["type"] == "red":
-                    reward -= 5
+                elif apple["type"] == "red":
+                    reward -= 10.0  
 
                 self.apples.remove(apple)
-                self.apples.append(self.createApple(apple["type"]))
+                new_apple = self.createApple(apple["type"])
+                if new_apple is not None:
+                    self.apples.append(new_apple)
+                    self.updateApplesCoords()
                 break
 
         if eaten is None:
@@ -112,79 +127,84 @@ class MapState:
 
         if len(self.snake) < 1:
             return self.get_state(), -50, True
-
-        if self.steps_without_food > 100:
-            return self.get_state(), -50, True
-
         return self.get_state(), reward, False
 
-    def normParam(self, distance):
-        # return round((self.size - distance) / self.size, 1)
-        if distance <= 2:
-            val = 3
-        elif distance <= 4:
-            val = 2
-        elif distance <= 6:
-            val = 1
-        else:
-            val = 0
-        return val
 
     def get_state(self):
+        head = self.snake[0]
+        head_x = head["x"]
+        head_y = head["y"]
+        dx, dy = self.direction
+        
+        dir_forward = (dx, dy)
+        dir_left = (dy, -dx)
+        dir_right = (-dy, dx)
+        dir_behind = (-dx, -dy)
 
-        head_x = self.snake[0]["x"]
-        head_y = self.snake[0]["y"]
+        directions = {
+            "forward": dir_forward,
+            "left": dir_left,
+            "right": dir_right,
+            "behind": dir_behind
+        }
 
-        directions = [
-            (0, -1),  # UP
-            (0, 1),   # DOWN
-            (-1, 0),  # LEFT
-            (1, 0)    # RIGHT
-        ]
+        apple_forward = 0
+        apple_left = 0
+        apple_right = 0
+        apple_behind = 0
+        danger_forward = 0
+        danger_left = 0
+        danger_right = 0
 
-        state = []
+        # 4 directions
+        for name, (cur_dx, cur_dy) in directions.items():
+            x = head_x + cur_dx
+            y = head_y + cur_dy
+            distance = 1
 
-        for dx, dy in directions:
-
-            x = head_x + dx
-            y = head_y + dy
-
-            danger = 0
-            food = 0
-
-            # смотрим вдоль луча
             while 0 <= x < self.size and 0 <= y < self.size:
+                # BODY
+                if any(part["x"] == x and part["y"] == y for part in self.snake):
+                    if distance == 1 and name != "behind":
+                        if name == "forward": danger_forward = 1
+                        if name == "left": danger_left = 1
+                        if name == "right": danger_right = 1
+                    break
 
-                # тело = опасность
-                if {"x": x, "y": y} in self.snake[1:]:
-                    danger = 1
+                # RED APPLE
+                if (x, y) in self.red_coords:
+                    if distance == 1 and name != "behind":
+                        if name == "forward": danger_forward = 1
+                        if name == "left": danger_left = 1
+                        if name == "right": danger_right = 1
+                    break  # RED APPLE blocks vision
 
-                # стена = опасность (если сразу или позже)
-                # если мы вообще вышли — значит уже опасно
-                # (обрабатывается через границу)
+                # В) ЗЕЛЕНОЕ ЯБЛОКО
+                if (x, y) in self.green_coords:
+                    if name == "forward": apple_forward = 1
+                    if name == "left": apple_left = 1
+                    if name == "right": apple_right = 1
+                    if name == "behind": apple_behind = 1
+                    # RED APPLE doesn't blocks vision
 
-                # зелёное яблоко
-                if {"x": x, "y": y, "type": "green"} in self.apples:
-                    food = 1
+                x += cur_dx
+                y += cur_dy
+                distance += 1
 
-                x += dx
-                y += dy
+            # Если вышли за карту — это стена в конце луча
+            if distance == 1:
+                if name == "forward": danger_forward = 1
+                if name == "left": danger_left = 1
+                if name == "right": danger_right = 1
 
-            # если следующий шаг сразу в стену → danger
-            nx = head_x + dx
-            ny = head_y + dy
+        state = (
+            danger_forward,
+            danger_left,
+            danger_right,
+            apple_forward,
+            apple_behind,
+            apple_left,
+            apple_right
+        )
 
-            if not (0 <= nx < self.size and 0 <= ny < self.size):
-                danger = 1
-
-            state.extend([danger, food])
-
-        # текущее направление (важно для избегания разворота)
-        state.extend([
-            1 if self.direction == (0, -1) else 0,
-            1 if self.direction == (0, 1) else 0,
-            1 if self.direction == (-1, 0) else 0,
-            1 if self.direction == (1, 0) else 0
-        ])
-
-        return tuple(state)
+        return state
