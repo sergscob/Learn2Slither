@@ -2,7 +2,7 @@ VENV_DIR ?= .venv
 PYTHON ?= python3
 PIP := $(VENV_DIR)/bin/pip
 
-.PHONY: venv syntax-check check encrypt-vault deploy deploy-pass task
+.PHONY: venv all m100000 m1 fclear
 
 venv:
 	@if [ ! -x "$(PIP)" ]; then \
