@@ -5,7 +5,7 @@ from plot import GamePlot
 from agent import QAgent
 
 
-def train(episode_count, show_freq, pring_freq, learn, grid_size,
+def train(episode_count, show_freq, print_freq, learn, grid_size,
           print_vision, filename):
     agent = QAgent()
     env = MapState(grid_size)
@@ -61,7 +61,7 @@ def train(episode_count, show_freq, pring_freq, learn, grid_size,
 
         agent.end_episode()
 
-        if episode % pring_freq == 0 or episode % show_freq == 0:
+        if episode % print_freq == 0 or episode % show_freq == 0:
             print(
                 f"ep: {episode} | reward: {episode_reward:.1f} | "
                 f"epsilon: {agent.epsilon:.2f} | "
