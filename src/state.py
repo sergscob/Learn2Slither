@@ -4,6 +4,9 @@ import random
 class MapState:
     def __init__(self, size):
         self.size = size
+        self.episode = 0
+        self.avg_len = 0
+        self.steps = 0
         self.reset()
 
     def reset(self):
@@ -115,7 +118,8 @@ class MapState:
             if apple["x"] == new_head["x"] and apple["y"] == new_head["y"]:
                 if apple["type"] == "green":
                     eaten = apple
-                    reward += 10.0
+                    # reward += 10.0
+                    reward += 10.0 + (len(self.snake) * 0.2)
                     self.steps_without_food = 0
                 elif apple["type"] == "red":
                     reward -= 10.0
@@ -134,6 +138,11 @@ class MapState:
             return self.get_state(), -50, True
         return self.get_state(), reward, False
 
+    def set_stat(self, episode, total_len, steps):
+        self.episode = episode
+        self.avg_len = total_len / (episode+1)
+        self.steps = steps
+
     def get_state(self):
         head = self.snake[0]
         head_x = head["x"]
@@ -148,43 +157,51 @@ class MapState:
         }
 
         dangers = {"forward": 0, "left": 0, "right": 0, "behind": 0}
+        body_far = {"forward": 0, "left": 0, "right": 0, "behind": 0}
         apples_found = {"forward": 0, "left": 0, "right": 0, "behind": 0}
 
         snake_body = {(part["x"], part["y"]) for part in self.snake}
 
-        # 4 Directions
         for name, (cur_dx, cur_dy) in directions.items():
             x = head_x + cur_dx
             y = head_y + cur_dy
             distance = 1
 
             while 0 <= x < self.size and 0 <= y < self.size:
-                # SELF-Collision or RED APPLE
-                if (x, y) in snake_body or (x, y) in self.red_coords:
+                # BODY
+                if (x, y) in snake_body:
                     if distance == 1:
                         dangers[name] = 1
-                    break  # on ne voit rien apres
+                    else:
+                        body_far[name] = 1
+                    break
 
-                # GREEN APPLE
+                # RED
+                if (x, y) in self.red_coords:
+                    if distance == 1:
+                        dangers[name] = 1
+                    break
+
+                # GREEN
                 if (x, y) in self.green_coords:
-                    apples_found[name] = 1  # on voit apres
+                    apples_found[name] = 1
 
                 x += cur_dx
                 y += cur_dy
                 distance += 1
-
             # WALL
             if distance == 1:
                 dangers[name] = 1
 
-        state = (
+        return (
             dangers["forward"],
             dangers["left"],
             dangers["right"],
+            body_far["forward"],
+            body_far["left"],
+            body_far["right"],
             apples_found["forward"],
             apples_found["behind"],
             apples_found["left"],
             apples_found["right"]
         )
-
-        return state

@@ -31,9 +31,9 @@ class QAgent:
 
         print(f"Model saved to {fname}")
 
-    def load_model(self, filename="qtable.pkl"):
+    def load_model(self, filename):
         if not os.path.exists(filename):
-            print("No saved model found")
+            print("Error: No saved model found !")
             return
 
         with open(filename, "r") as f:
@@ -52,11 +52,11 @@ class QAgent:
     def encode_state(self, state):
         return tuple(state)
 
-    def choose_action(self, state):
+    def choose_action(self, state, learn):
         state = self.encode_state(state)
 
         # 1. Exploration
-        if random.random() < self.epsilon:
+        if learn and random.random() < self.epsilon:
             return random.randint(0, 2)
 
         # 2. Exploitation
@@ -75,7 +75,7 @@ class QAgent:
         if done:
             target = reward
         else:
-            # Выбираем максимум из 3-х возможных относительных действий
+            # choix de actions
             next_q = max(self.q_table[next_state])
             target = reward + self.gamma * next_q
 
