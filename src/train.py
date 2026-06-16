@@ -70,9 +70,10 @@ def train(episode_count, show_freq, pring_freq, learn, grid_size, filename):
         max_len = max(max_len, len(env.snake))
         total_len += len(env.snake)
 
+    plot.show_final(env, episode+1, max_len, max_steps)
     print(f"\nTraining finished. episodes: {episode+1}."
           f" Max steps={max_steps}. Max snake len={max_len}."
-          f"Average len: {round(total_len / (episode+1))}")
+          f" Average len: {round(total_len / (episode+1))}")
     if not userBreak:
         plot.wait_until_close(True)
 

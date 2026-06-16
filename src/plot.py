@@ -50,7 +50,6 @@ class GamePlot:
 
             self.screen.fill((0, 0, 0))
 
-            # --- 1. ОТРИСОВКА ЯБЛОК ---
             for a in env.apples:
                 color = (0, 255, 0) if a["type"] == "green" else (255, 0, 0)
                 pygame.draw.circle(
@@ -60,14 +59,13 @@ class GamePlot:
                     int(CELL / 2)
                 )
 
-            # --- 2. ОТРИСОВКА ЗМЕЙКИ ---
+            # SNAKE
             head = True
             for p in env.snake:
                 pygame.draw.rect(
                     self.screen,
                     (0, 0, 250) if head else (0, 0, 150),
-                    (p["x"] * CELL + 1, p["y"] * CELL + 1, CELL - 2, CELL - 2)
-                )
+                    (p["x"] * CELL + 1, p["y"] * CELL + 1, CELL - 2, CELL - 2))
                 head = False
 
             pygame.draw.rect(self.screen, BTN_COLOR, self.pause_btn)
@@ -75,7 +73,6 @@ class GamePlot:
 
             pause_text = "Resume" if self.paused else "Pause"
 
-            # Центрируем уменьшенный текст на кнопках (y + 12 вместо y + 10)
             self.screen.blit(
                 self.font.render(pause_text, True, (255, 255, 255)),
                 (self.pause_btn.x + 35, self.pause_btn.y + 12)
@@ -85,23 +82,7 @@ class GamePlot:
                 (self.save_btn.x + 42, self.save_btn.y + 12)
             )
 
-            (stats_text, dir_text, vision_text_1, vision_text_2,
-                state_text) = self.get_telemetry(env, env.get_state())
-
-            panel_y = self.size * CELL + 55
-            line_spacing = 18
-
-            self.screen.blit(self.font.render(stats_text,
-                             True, (255, 215, 0)), (10, panel_y))
-            self.screen.blit(self.font.render(dir_text, True,
-                             (255, 120, 120)), (10, panel_y + line_spacing))
-            self.screen.blit(self.font.render(vision_text_1, True,
-                             (255, 120, 120)), (10, panel_y + line_spacing*2))
-            self.screen.blit(self.font.render(vision_text_2, True,
-                             (120, 255, 120)), (10, panel_y + line_spacing*3))
-            self.screen.blit(self.font.render(state_text, True,
-                             (160, 160, 160)), (10, panel_y + line_spacing*4))
-
+            self.show_telemetry(env)
             pygame.display.flip()
 
             if self.paused:
@@ -161,3 +142,41 @@ class GamePlot:
         print(f"Paused: \n{stats_text}\n{dir_text}\n"
               f"{RED}{vision_text_1}{RESET}"
               f"\n{GREEN}{vision_text_2}{RESET}\n{state_text}")
+
+    def show_telemetry(self, env):
+        (stats_text, dir_text, vision_text_1, vision_text_2,
+            state_text) = self.get_telemetry(env, env.get_state())
+
+        panel_y = self.size * CELL + 55
+        pygame.draw.rect(self.screen, (0, 0, 0), (0, panel_y, self.width, 55))
+        line_spacing = 18
+
+        self.screen.blit(self.font.render(stats_text,
+                         True, (255, 215, 0)), (10, panel_y))
+        self.screen.blit(self.font.render(dir_text, True,
+                         (255, 120, 120)), (10, panel_y + line_spacing))
+        self.screen.blit(self.font.render(vision_text_1, True,
+                         (255, 120, 120)), (10, panel_y + line_spacing*2))
+        self.screen.blit(self.font.render(vision_text_2, True,
+                         (120, 255, 120)), (10, panel_y + line_spacing*3))
+        self.screen.blit(self.font.render(state_text, True,
+                         (160, 160, 160)), (10, panel_y + line_spacing*4))
+
+    def show_final(self, env, episodes, max_len, max_steps):
+        panel_y = self.size * CELL + 55
+        line_spacing = 18
+        pygame.draw.rect(self.screen, (0, 0, 0),
+                         (0, panel_y, self.width, self.height - panel_y))
+
+        text = f"Eposodes: {episodes}"
+        self.screen.blit(self.font.render(text, True,
+                         (0, 255, 255)), (10, panel_y))
+
+        text = f"Avg Len: {env.avg_len:.0f}"
+        self.screen.blit(self.font.render(text, True, (0, 255, 255)),
+                         (10, panel_y + line_spacing))
+
+        text = f"Max len: {max_len}  |  Max steps: {max_steps}"
+        self.screen.blit(self.font.render(text, True, (0, 255, 255)),
+                         (10, panel_y + line_spacing*2))
+        pygame.display.flip()
