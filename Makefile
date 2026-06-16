@@ -11,14 +11,15 @@ venv:
 		"$(PIP)" install -r requirements.txt; \
 	fi
 
-split: venv
-	./.venv/bin/python3 src/split.py $(ARGS)
+all: venv
+	./.venv/bin/python3 src/main.py $(ARGS)
 
-train: venv
-	./.venv/bin/python3 src/train.py $(ARGS)
+m100000: venv
+	./.venv/bin/python3 src/main.py -m model/model_100000.json -l 0 -c 1000
 
-predict: venv
-	./.venv/bin/python3 src/predict.py $(ARGS)	
+m1: venv
+	./.venv/bin/python3 src/main.py -m model/model_1.json -l 0
+
 
 fclear: 
 	rm -rf .venv	
