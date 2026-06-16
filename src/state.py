@@ -136,7 +136,7 @@ class MapState:
 
         if len(self.snake) < 1:
             return self.get_state(), -50, True
-        
+
         return self.get_state(), reward, False
 
     def set_stat(self, episode, total_len, steps):

@@ -5,7 +5,8 @@ from plot import GamePlot
 from agent import QAgent
 
 
-def train(episode_count, show_freq, pring_freq, learn, grid_size, filename):
+def train(episode_count, show_freq, pring_freq, learn, grid_size,
+          print_vision, filename):
     agent = QAgent()
     env = MapState(grid_size)
     plot = GamePlot(grid_size, agent)
@@ -41,6 +42,8 @@ def train(episode_count, show_freq, pring_freq, learn, grid_size, filename):
             next_state, reward, done = env.move()
             episode_reward += reward
 
+            if print_vision:
+                plot.print_snake_vision(env, env.get_state())
             if show:
                 userBreak = plot.tick(env, state)
             else:
@@ -84,6 +87,7 @@ def main():
     parser.add_argument("-p", "--print", default="100", help="print freq")
     parser.add_argument("-m", "--model", default="", help="model file")
     parser.add_argument("-l", "--learn", default=True, help="allow to learn")
+    parser.add_argument("-v", "--vision", default=0, help="printvision")
     args = parser.parse_args()
 
     grid_size = int(args.grid) if args.grid.isdigit() else 0
@@ -91,6 +95,7 @@ def main():
     show_freq = int(args.show) if args.show.isdigit() else 0
     pring_freq = int(args.print) if args.print.isdigit() else 0
     learn = int(args.learn)
+    print_vision = int(args.vision)
 
     if grid_size < 7 or grid_size > 20:
         print("\nGrid size must be between 7 and 20")
@@ -111,7 +116,8 @@ def main():
     print(f"Live show every {show_freq} episodes")
     print(f"Print result every {pring_freq} episodes")
 
-    train(episode_count, show_freq, pring_freq, learn, grid_size, args.model)
+    train(episode_count, show_freq, pring_freq, learn, grid_size,
+          print_vision, args.model)
 
 
 if __name__ == "__main__":

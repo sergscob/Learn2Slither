@@ -133,8 +133,8 @@ class GamePlot:
     def print_snake_vision(self, env, state):
         (stats_text, dir_text, vision_text_1, vision_text_2,
             state_text) = self.get_telemetry(env, state)
-
-        print(f"Paused: \n{stats_text}\n{dir_text}\n"
+        status = "PAUSED" if self.paused else "STEP"
+        print(f"=== {status} ===: \n{stats_text}\n{dir_text}\n"
               f"{RED}{vision_text_1}{RESET}"
               f"\n{GREEN}{vision_text_2}{RESET}\n{state_text}")
 
