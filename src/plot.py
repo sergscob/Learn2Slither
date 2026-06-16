@@ -19,13 +19,10 @@ class GamePlot:
         self.agent = agent
         self.width = self.size * CELL
         self.height = self.size * CELL + BTN_HEIGHT
-
         self.screen = pygame.display.set_mode((self.width, self.height))
         self.clock = pygame.time.Clock()
         self.font = pygame.font.SysFont(None, 20)
-
         self.paused = False
-
         self.pause_btn = pygame.Rect(10, self.size * CELL + 5, 120, 40)
         self.save_btn = pygame.Rect(150, self.size * CELL + 5, 120, 40)
 
@@ -53,8 +50,7 @@ class GamePlot:
             for a in env.apples:
                 color = (0, 255, 0) if a["type"] == "green" else (255, 0, 0)
                 pygame.draw.circle(
-                    self.screen,
-                    color,
+                    self.screen, color,
                     (int(a["x"] * CELL + CELL/2), int(a["y"] * CELL + CELL/2)),
                     int(CELL / 2)
                 )
@@ -63,8 +59,7 @@ class GamePlot:
             head = True
             for p in env.snake:
                 pygame.draw.rect(
-                    self.screen,
-                    (0, 0, 250) if head else (0, 0, 150),
+                    self.screen, (0, 0, 250) if head else (0, 0, 150),
                     (p["x"] * CELL + 1, p["y"] * CELL + 1, CELL - 2, CELL - 2))
                 head = False
 

@@ -12,7 +12,6 @@ class QAgent:
         self.epsilon = 1.0
         self.epsilon_decay = 0.9995
         self.epsilon_min = 0.01
-
         # 3 actions: 0=forward, 1=left, 2=right
         self.q_table = defaultdict(lambda: [0.0, 0.0, 0.0])
 
@@ -39,7 +38,7 @@ class QAgent:
             data = json.load(f)
 
         self.q_table = defaultdict(
-            lambda: [0.0, 0.0, 0.0, 0.0]
+            lambda: [0.0, 0.0, 0.0]
         )
 
         for k, v in data["q_table"].items():
@@ -56,11 +55,11 @@ class QAgent:
     def choose_action(self, state, learn):
         state = self.encode_state(state)
 
-        # 1. Exploration
+        # Exploration
         if learn and random.random() < self.epsilon:
             return random.randint(0, 2)
 
-        # 2. Exploitation
+        # Exploitation
         q_values = self.q_table[state]
         best_value = max(q_values)
         best_actions = [a for a in range(3) if q_values[a] == best_value]
@@ -76,7 +75,6 @@ class QAgent:
         if done:
             target = reward
         else:
-            # choix de actions
             next_q = max(self.q_table[next_state])
             target = reward + self.gamma * next_q
 

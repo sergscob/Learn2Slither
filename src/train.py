@@ -60,11 +60,9 @@ def train(episode_count, show_freq, pring_freq, learn, grid_size, filename):
 
         if episode % pring_freq == 0 or episode % show_freq == 0:
             print(
-                f"ep: {episode} | "
-                f"reward: {episode_reward:.1f} | "
+                f"ep: {episode} | reward: {episode_reward:.1f} | "
                 f"epsilon: {agent.epsilon:.2f} | "
-                f"steps: {steps} | "
-                f"snake_len: {len(env.snake)}"
+                f"steps: {steps} | snake_len: {len(env.snake)}"
             )
         max_steps = max(max_steps, steps)
         max_len = max(max_len, len(env.snake))
