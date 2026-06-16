@@ -1,5 +1,4 @@
 from collections import defaultdict
-import ast
 import random
 import json
 import os
@@ -24,7 +23,7 @@ class QAgent:
         fname = "model/" + datetime.now().strftime("model_%Y%m%d_%H%M%S.json")
         data = {
             "q_table": {str(k): v for k, v in self.q_table.items()},
-            "epsilon": self.epsilon,
+            # "epsilon": self.epsilon,
         }
         with open(fname, "w") as f:
             json.dump(data, f)
@@ -44,9 +43,11 @@ class QAgent:
         )
 
         for k, v in data["q_table"].items():
-            self.q_table[ast.literal_eval(k)] = v
+            # k = "(1, 0, 0, 0, 0, 1, 0)"
+            key_tuple = tuple(int(x) for x in k.strip("()").split(","))
+            self.q_table[key_tuple] = v
 
-        self.epsilon = data["epsilon"]
+        # self.epsilon = data["epsilon"]
         print(f"Model loaded from {filename}")
 
     def encode_state(self, state):
